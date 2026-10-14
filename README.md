@@ -1,2 +1,10 @@
-SonnetAPI的安装十分简单，将annotation、core、model、web四个文件加入项目根目录即可完成。
-使用时参考Main中代码，创建SonnetAPIContext实例并启动WebServer，框架就会自动完成后续所有操作。
+我最早写HTTP服务用的是FastAPI。它的不分层设计让数据流转一目了然，没接触过Web开发的人也能快速上手。但使用它时，我一直在想一个问题：这种高度耦合的写法，如何多人合作？
+后来我接触了Spring Boot。控制层、服务层、存储层的引入以及自动装配的魔法，让每个程序员只需要关注自己的业务，不必关心数据在系统里如何流转。这种设计极大方便了协作，但繁琐的结构和配置也带来了不小的心智负担。
+
+于是我写了SonnetAPI！特性如下：
+1.注解即路由：在类上标@Sonnet、方法上标@PostRequest，框架就会自动扫描并注册路由，无需分层与XML配置。
+2.自动装配：@Verse声明组件，@Refrain注入依赖。
+3.统一接口：所有接口均为POST方法，JSON进出。任何人经过一天培训即可加入团队。
+4.高性能后端：基于Netty事件驱动的HTTP服务器。
+
+SonnetAPI的设计理念是编程弱智化、合作可选化。示范代码仅14行，故得名Sonnet（14行诗）。SonnetAPI的安装十分简单，将annotation、core、model、web四个文件加入项目根目录即可完成。使用时参考Main中代码，创建SonnetAPIContext实例并启动WebServer，框架就会自动完成后续所有操作。
