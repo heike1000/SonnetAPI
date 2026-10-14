@@ -1,0 +1,2 @@
+SonnetAPI的安装十分简单，将annotation、core、model、web四个文件加入项目根目录即可完成。
+使用时参考Main中代码，创建SonnetAPIContext实例并启动WebServer，框架就会自动完成后续所有操作。
