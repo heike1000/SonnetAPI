@@ -22,17 +22,16 @@ public class RouteRegistry {
     public Map<String, RouteMapper> register() {
         Map<String, RouteMapper> routes = new HashMap<>();
 
-        for (Map.Entry<Class<?>, BeanDefinition> entry : beanDefinitions.entrySet()) {
+        for (BeanDefinition beanDefinition : beanDefinitions.values()) {
             // 判断是否为路由
-            BeanDefinition definition = entry.getValue();
-            if (!definition.isRoute) continue;
+            if (!beanDefinition.isRoute) continue;
 
-            Class<?> clazz = definition.clazz;
+            Class<?> clazz = beanDefinition.clazz;
             Object bean = beans.get(clazz);
             String first = clazz.getAnnotation(Sonnet.class).value();
 
             // 注册post方法
-            for (Method method : definition.postMethods) {
+            for (Method method : beanDefinition.postMethods) {
                 // 检查地址合法性
                 String last = method.getAnnotation(PostRequest.class).value();
                 if (first.isBlank() || last.isBlank()) {
@@ -53,7 +52,7 @@ public class RouteRegistry {
             }
 
             // 注册get方法
-            for (Method method : definition.getMethods) {
+            for (Method method : beanDefinition.getMethods) {
                 // 检查地址合法性
                 String last = method.getAnnotation(GetRequest.class).value();
                 if (first.isBlank() || last.isBlank()) {
