@@ -37,30 +37,51 @@ public class BeanFactory {
 
             // 是否为路由，如果是则添加路由方法
             boolean isRoute = clazz.isAnnotationPresent(Sonnet.class);
-            List<Method> routeMethods = new ArrayList<>();
+            List<Method> postMethods = new ArrayList<>();
+            List<Method> getMethods = new ArrayList<>();
             if (isRoute) {
                 for (Method method : clazz.getDeclaredMethods()) {
-                    // 检查参数合法性
-                    int count = method.getParameterCount();
-                    if (count > 1) {
-                        throw new IllegalArgumentException();
-                    } else if (count == 1) {
-                        if (method.getParameterTypes()[0] != JsonObject.class || !method.getParameters()[0].isAnnotationPresent(JsonBody.class)) {
-                            throw new IllegalArgumentException();
-                        }
-                    }
-
-                    // 检查返回值合法性
-                    if (!JsonElement.class.isAssignableFrom(method.getReturnType())) {
-                        throw new IllegalStateException("Route " + method +" must return JsonElement");
-                    }
                     if (method.isAnnotationPresent(PostRequest.class)) {
-                        routeMethods.add(method);
+                        // 检查参数合法性
+                        int count = method.getParameterCount();
+                        if (count > 1) {
+                            throw new IllegalArgumentException();
+                        } else if (count == 1) {
+                            if (!(method.getParameters()[0].isAnnotationPresent(JsonBody.class) &&
+                                    method.getParameterTypes()[0] == JsonObject.class)) {
+                                throw new IllegalArgumentException();
+                            }
+                        }
+
+                        // 检查返回值合法性
+                        if (!JsonElement.class.isAssignableFrom(method.getReturnType())) {
+                            throw new IllegalStateException("Route " + method + " must return JsonElement");
+                        }
+
+                        postMethods.add(method);
+                    } else if (method.isAnnotationPresent(GetRequest.class)) {
+                        // 检查参数合法性
+                        int count = method.getParameterCount();
+                        if (count > 1) {
+                            throw new IllegalArgumentException();
+                        } else if (count == 1) {
+                            if (!(method.getParameters()[0].isAnnotationPresent(QueryParam.class) &&
+                                    Map.class.isAssignableFrom(method.getParameterTypes()[0]))) {
+                                throw new IllegalArgumentException();
+                            }
+                        }
+
+                        // 检查返回值合法性
+                        if (!JsonElement.class.isAssignableFrom(method.getReturnType())) {
+                            throw new IllegalStateException("Route " + method + " must return JsonElement");
+                        }
+
+                        getMethods.add(method);
                     }
                 }
             }
 
-            BeanDefinition beanDefinition = new BeanDefinition(clazz, fields, isRoute, routeMethods);
+            BeanDefinition beanDefinition = new BeanDefinition(clazz, fields, isRoute, postMethods, getMethods);
             beanDefinitions.put(clazz, beanDefinition);
         }
     }
@@ -77,6 +98,10 @@ public class BeanFactory {
     public Object getBean(Class<?> clazz) throws Exception {
         if (beans.containsKey(clazz)) return beans.get(clazz);
         if (earlyBeans.containsKey(clazz)) return earlyBeans.get(clazz);
+
+        if (beanDefinitions.get(clazz) == null) {
+            throw new IllegalStateException("No bean definition found for " + clazz.getName());
+        }
 
         Object bean = clazz.getDeclaredConstructor().newInstance();
         earlyBeans.put(clazz, bean);

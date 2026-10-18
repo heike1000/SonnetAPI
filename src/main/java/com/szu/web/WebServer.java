@@ -10,7 +10,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
+import java.util.*;
 
 public class WebServer implements AutoCloseable {
     private static final Gson gson = new Gson();
@@ -41,15 +41,22 @@ public class WebServer implements AutoCloseable {
         String body = new String(ex.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
         Result result;
-        if (!"POST".equals(method)) {
-            result = new Result(405, gson.toJson("Post required"));
-        } else {
+        if ("POST".equals(method)) {
             RouteMapper mapper = routes.get(path);
             if (mapper == null) {
                 result = new Result(404, gson.toJson("404 not found"));
             } else {
-                result = invoke(mapper, body);
+                result = postInvoke(mapper, body);
             }
+        } else if ("GET".equals(method)) {
+            RouteMapper mapper = routes.get(path);
+            if (mapper == null) {
+                result = new Result(404, gson.toJson("404 not found"));
+            } else {
+                result = getInvoke(mapper, ex.getQueryParameters());
+            }
+        } else {
+            result = new Result(405, gson.toJson("Method not allowed"));
         }
 
         ex.setStatusCode(result.status);
@@ -58,20 +65,38 @@ public class WebServer implements AutoCloseable {
     }
 
     // 反射调用
-    private Result invoke(RouteMapper mapper, String body) {
+    private Result postInvoke(RouteMapper mapper, String body) {
         try {
             int count = mapper.method.getParameterCount();
             Object[] args = new Object[count];
             if (count == 1) {
                 args[0] = JsonParser.parseString(body).getAsJsonObject();
-            } else if (count != 0) {
-                return new Result(500, gson.toJson("unsupported"));
             }
 
             JsonElement result = (JsonElement) mapper.method.invoke(mapper.bean, args);
             return new Result(200, result == null ? "null" : result.toString());
         } catch (Exception e) {
-            return new Result(500, gson.toJson("error"));
+            return new Result(500, gson.toJson("Error while invoking"));
+        }
+    }
+
+    private Result getInvoke(RouteMapper mapper, Map<String, Deque<String>> queryParams) {
+        try {
+            int count = mapper.method.getParameterCount();
+            Object[] args = new Object[count];
+            if (count == 1) {
+                Map<String, String> params = new HashMap<>();
+                for (Map.Entry<String, Deque<String>> e : queryParams.entrySet()) {
+                    Deque<String> values = e.getValue();
+                    params.put(e.getKey(), values.peekFirst());
+                }
+                args[0] = params;
+            }
+
+            JsonElement result = (JsonElement) mapper.method.invoke(mapper.bean, args);
+            return new Result(200, result == null ? "null" : result.toString());
+        } catch (Exception e) {
+            return new Result(500, gson.toJson("Error while invoking"));
         }
     }
 

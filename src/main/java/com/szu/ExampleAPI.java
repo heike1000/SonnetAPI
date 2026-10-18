@@ -7,14 +7,17 @@ import com.szu.annotation.Refrain;
 import com.szu.annotation.Sonnet;
 import com.szu.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @Sonnet("/api")
 public class ExampleAPI {
     @Refrain
     ExampleFunction exampleFunction;
 
-    @PostRequest("/hello")
-    public JsonObject response(@JsonBody JsonObject json) {
-        String name = json.get("name").getAsString();
+    @GetRequest("/hello")
+    public JsonObject response(@QueryParam Map<String, String> Params) {
+        String name = Params.get("name");
         JsonObject result = new JsonObject();
         result.addProperty("status", "success");
         result.addProperty("message", exampleFunction.hello() + " " + name);

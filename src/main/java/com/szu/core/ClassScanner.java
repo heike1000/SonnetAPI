@@ -7,10 +7,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.logging.Logger;
 
 public class ClassScanner {
-    private static final Logger LOG = Logger.getLogger(ClassScanner.class.getName());
     private String basePackage;
 
     ClassScanner(String basePackage) {
