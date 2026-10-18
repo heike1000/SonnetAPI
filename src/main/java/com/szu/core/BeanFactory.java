@@ -22,12 +22,12 @@ public class BeanFactory {
         this.classes = classes;
     }
 
-    public void createBeanDefinition() {
+    public Map<Class<?>, BeanDefinition> createBeanDefinition() {
         for (Class<?> clazz : classes) {
             // 未标注则跳过
             if (!(clazz.isAnnotationPresent(Sonnet.class) || clazz.isAnnotationPresent(Verse.class))) continue;
 
-            // 添加字段
+            // 添加字段信息
             List<Field> fields = new ArrayList<>();
             for (Field field : clazz.getDeclaredFields()) {
                 if (field.isAnnotationPresent(Refrain.class)) {
@@ -35,7 +35,7 @@ public class BeanFactory {
                 }
             }
 
-            // 是否为路由，如果是则添加路由方法
+            // 添加路由信息
             boolean isRoute = clazz.isAnnotationPresent(Sonnet.class);
             List<Method> postMethods = new ArrayList<>();
             List<Method> getMethods = new ArrayList<>();
@@ -82,6 +82,8 @@ public class BeanFactory {
             BeanDefinition beanDefinition = new BeanDefinition(clazz, fields, isRoute, postMethods, getMethods);
             beanDefinitions.put(clazz, beanDefinition);
         }
+
+        return beanDefinitions;
     }
 
     public Map<Class<?>, Object> createBeans() throws Exception {
@@ -116,13 +118,10 @@ public class BeanFactory {
             field.set(bean, getBean(field.getType()));
         }
 
+        // 注入完成，加入一级缓存
         earlyBeans.remove(clazz);
         beans.put(clazz, bean);
 
         return bean;
-    }
-
-    public Map<Class<?>, BeanDefinition> getBeanDefinitions() {
-        return beanDefinitions;
     }
 }

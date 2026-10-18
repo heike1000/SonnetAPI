@@ -11,19 +11,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class RouteRegistry {
-    private final Map<Class<?>, Object> beans;
     private final Map<Class<?>, BeanDefinition> beanDefinitions;
+    private final Map<Class<?>, Object> beans;
 
     RouteRegistry(Map<Class<?>, Object> beans, Map<Class<?>, BeanDefinition> beanDefinitions) {
-        this.beans = beans;
         this.beanDefinitions = beanDefinitions;
+        this.beans = beans;
     }
 
     public Map<String, RouteMapper> register() {
         Map<String, RouteMapper> routes = new HashMap<>();
 
         for (Map.Entry<Class<?>, BeanDefinition> entry : beanDefinitions.entrySet()) {
-            // 判断是否为路由类
+            // 判断是否为路由
             BeanDefinition definition = entry.getValue();
             if (!definition.isRoute) continue;
 
