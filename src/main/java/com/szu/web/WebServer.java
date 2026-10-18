@@ -46,14 +46,14 @@ public class WebServer implements AutoCloseable {
             if (mapper == null) {
                 result = new Result(404, gson.toJson("404 not found"));
             } else {
-                result = postInvoke(mapper, body);
+                result = POSTInvoke(mapper, body);
             }
         } else if ("GET".equals(method)) {
             RouteMapper mapper = routes.get(path);
             if (mapper == null) {
                 result = new Result(404, gson.toJson("404 not found"));
             } else {
-                result = getInvoke(mapper, ex.getQueryParameters());
+                result = GETInvoke(mapper, ex.getQueryParameters());
             }
         } else {
             result = new Result(405, gson.toJson("Method not allowed"));
@@ -65,12 +65,12 @@ public class WebServer implements AutoCloseable {
     }
 
     // 反射调用
-    private Result postInvoke(RouteMapper mapper, String body) {
+    private Result POSTInvoke(RouteMapper mapper, String jsonBody) {
         try {
             int count = mapper.method.getParameterCount();
             Object[] args = new Object[count];
             if (count == 1) {
-                args[0] = JsonParser.parseString(body).getAsJsonObject();
+                args[0] = JsonParser.parseString(jsonBody).getAsJsonObject();
             }
 
             JsonElement result = (JsonElement) mapper.method.invoke(mapper.bean, args);
@@ -81,7 +81,7 @@ public class WebServer implements AutoCloseable {
     }
 
     // 反射调用
-    private Result getInvoke(RouteMapper mapper, Map<String, Deque<String>> queryParams) {
+    private Result GETInvoke(RouteMapper mapper, Map<String, Deque<String>> queryParams) {
         try {
             int count = mapper.method.getParameterCount();
             Object[] args = new Object[count];
