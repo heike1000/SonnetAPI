@@ -1,0 +1,82 @@
+package com.szu.web;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.szu.model.Result;
+import com.szu.model.RouteMapper;
+import io.undertow.Undertow;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+
+public class WebServer implements AutoCloseable {
+    private static final Gson gson = new Gson();
+    private final int port;
+    private final Map<String, RouteMapper> routes;
+    private Undertow server;
+
+    public WebServer(int port, Map<String, RouteMapper> routes) {
+        this.port = port;
+        this.routes = Map.copyOf(routes);
+    }
+
+    public void start() {
+        server = Undertow.builder().addHttpListener(port, "0.0.0.0").setHandler(this::handle).build();
+        server.start();
+    }
+
+    // 所有请求的统一入口
+    private void handle(HttpServerExchange ex) throws Exception {
+        if (ex.isInIoThread()) {
+            ex.dispatch(this::handle);
+            return;
+        }
+
+        ex.startBlocking();
+        String path = ex.getRequestPath();
+        String method = ex.getRequestMethod().toString();
+        String body = new String(ex.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+        Result result;
+        if (!"POST".equals(method)) {
+            result = new Result(405, gson.toJson("Post required"));
+        } else {
+            RouteMapper mapper = routes.get(path);
+            if (mapper == null) {
+                result = new Result(404, gson.toJson("404 not found"));
+            } else {
+                result = invoke(mapper, body);
+            }
+        }
+
+        ex.setStatusCode(result.status);
+        ex.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+        ex.getResponseSender().send(result.body == null ? "null" : result.body);
+    }
+
+    // 反射调用
+    private Result invoke(RouteMapper mapper, String body) {
+        try {
+            int count = mapper.method.getParameterCount();
+            Object[] args = new Object[count];
+            if (count == 1) {
+                args[0] = JsonParser.parseString(body).getAsJsonObject();
+            } else if (count != 0) {
+                return new Result(500, gson.toJson("unsupported"));
+            }
+
+            JsonElement result = (JsonElement) mapper.method.invoke(mapper.bean, args);
+            return new Result(200, result == null ? "null" : result.toString());
+        } catch (Exception e) {
+            return new Result(500, gson.toJson("error"));
+        }
+    }
+
+    @Override
+    public void close() {
+        if (server != null) server.stop();
+    }
+}
