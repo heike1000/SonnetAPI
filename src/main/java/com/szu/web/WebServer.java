@@ -64,7 +64,7 @@ public class WebServer implements AutoCloseable {
         ex.getResponseSender().send(result.body == null ? "null" : result.body);
     }
 
-    // 反射调用
+    // POST方法反射调用
     private Result POSTInvoke(RouteMapper mapper, String jsonBody) {
         try {
             int count = mapper.method.getParameterCount();
@@ -80,7 +80,7 @@ public class WebServer implements AutoCloseable {
         }
     }
 
-    // 反射调用
+    // GET方法反射调用
     private Result GETInvoke(RouteMapper mapper, Map<String, Deque<String>> queryParams) {
         try {
             int count = mapper.method.getParameterCount();
