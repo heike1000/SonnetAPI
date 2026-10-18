@@ -93,6 +93,7 @@ public class ClassScanner {
                 if (!name.startsWith(prefix)) continue;
 
                 String className = name.substring(0, name.length() - ".class".length()).replace('/', '.');
+
                 Class<?> clazz = Class.forName(className);
                 if (seen.add(className)) {
                     classes.add(clazz);

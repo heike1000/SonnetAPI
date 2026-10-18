@@ -47,8 +47,7 @@ public class BeanFactory {
                         if (count > 1) {
                             throw new IllegalArgumentException();
                         } else if (count == 1) {
-                            if (!(method.getParameters()[0].isAnnotationPresent(JsonBody.class) &&
-                                    method.getParameterTypes()[0] == JsonObject.class)) {
+                            if (!(method.getParameters()[0].isAnnotationPresent(JsonBody.class) && method.getParameterTypes()[0] == JsonObject.class)) {
                                 throw new IllegalArgumentException();
                             }
                         }
@@ -65,8 +64,7 @@ public class BeanFactory {
                         if (count > 1) {
                             throw new IllegalArgumentException();
                         } else if (count == 1) {
-                            if (!(method.getParameters()[0].isAnnotationPresent(QueryParam.class) &&
-                                    Map.class.isAssignableFrom(method.getParameterTypes()[0]))) {
+                            if (!(method.getParameters()[0].isAnnotationPresent(QueryParam.class) && Map.class.isAssignableFrom(method.getParameterTypes()[0]))) {
                                 throw new IllegalArgumentException();
                             }
                         }
@@ -96,18 +94,25 @@ public class BeanFactory {
 
     // 二级缓存注入
     public Object getBean(Class<?> clazz) throws Exception {
+        // 命中则直接返回
         if (beans.containsKey(clazz)) return beans.get(clazz);
         if (earlyBeans.containsKey(clazz)) return earlyBeans.get(clazz);
 
+        // 目标可能漏加注解
         if (beanDefinitions.get(clazz) == null) {
             throw new IllegalStateException("No bean definition found for " + clazz.getName());
         }
 
+        // 创建bean，加入二级缓存
         Object bean = clazz.getDeclaredConstructor().newInstance();
         earlyBeans.put(clazz, bean);
 
-        for (Field field : beanDefinitions.get(clazz).fields) {
+        for (Field field : clazz.getDeclaredFields()) {
             field.setAccessible(true);
+            // Sonnet类型不能当成组件被注入
+            if (field.getType().isAnnotationPresent(Sonnet.class)) {
+                throw new Exception("@Sonnet type " + field.getType().getName() + " can not be inject via @Verse");
+            }
             field.set(bean, getBean(field.getType()));
         }
 
