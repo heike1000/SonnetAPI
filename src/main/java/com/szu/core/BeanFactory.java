@@ -24,7 +24,7 @@ public class BeanFactory {
 
     public Map<Class<?>, BeanDefinition> createBeanDefinition() {
         for (Class<?> clazz : classes) {
-            // 未标注则跳过
+            // 无注解则跳过
             if (!(clazz.isAnnotationPresent(Sonnet.class) || clazz.isAnnotationPresent(Verse.class))) continue;
 
             // 添加字段信息
