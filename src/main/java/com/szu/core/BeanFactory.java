@@ -107,7 +107,7 @@ public class BeanFactory {
         Object bean = clazz.getDeclaredConstructor().newInstance();
         earlyBeans.put(clazz, bean);
 
-        for (Field field : clazz.getDeclaredFields()) {
+        for (Field field : beanDefinitions.get(clazz).fields) {
             field.setAccessible(true);
             // Sonnet类型不能当成组件被注入
             if (field.getType().isAnnotationPresent(Sonnet.class)) {
