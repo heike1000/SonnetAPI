@@ -9,7 +9,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class ClassScanner {
-    private String basePackage;
+    private final String basePackage;
 
     ClassScanner(String basePackage) {
         this.basePackage = basePackage;
