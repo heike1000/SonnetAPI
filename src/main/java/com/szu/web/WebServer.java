@@ -80,6 +80,7 @@ public class WebServer implements AutoCloseable {
         }
     }
 
+    // 反射调用
     private Result getInvoke(RouteMapper mapper, Map<String, Deque<String>> queryParams) {
         try {
             int count = mapper.method.getParameterCount();

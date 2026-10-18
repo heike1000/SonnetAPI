@@ -41,37 +41,37 @@ public class BeanFactory {
             List<Method> getMethods = new ArrayList<>();
             if (isRoute) {
                 for (Method method : clazz.getDeclaredMethods()) {
-                    if (method.isAnnotationPresent(PostRequest.class)) {
+                    if (method.isAnnotationPresent(POSTRequest.class)) {
                         // 检查参数合法性
                         int count = method.getParameterCount();
                         if (count > 1) {
-                            throw new IllegalArgumentException();
+                            throw new IllegalArgumentException("Method " + clazz.getName() + "#" + method.getName() + " must have at most 1 parameter");
                         } else if (count == 1) {
                             if (!(method.getParameters()[0].isAnnotationPresent(JsonBody.class) && method.getParameterTypes()[0] == JsonObject.class)) {
-                                throw new IllegalArgumentException();
+                                throw new IllegalArgumentException("Method " + clazz.getName() + "#" + method.getName() + "'s parameter should be like @JsonBody JsonObject xxx");
                             }
                         }
 
                         // 检查返回值合法性
                         if (!JsonElement.class.isAssignableFrom(method.getReturnType())) {
-                            throw new IllegalStateException("Route " + method + " must return JsonElement");
+                            throw new IllegalStateException("Route " + clazz.getName() + "#" + method.getName() + " must return JsonElement");
                         }
 
                         postMethods.add(method);
-                    } else if (method.isAnnotationPresent(GetRequest.class)) {
+                    } else if (method.isAnnotationPresent(GETRequest.class)) {
                         // 检查参数合法性
                         int count = method.getParameterCount();
                         if (count > 1) {
-                            throw new IllegalArgumentException();
+                            throw new IllegalArgumentException("Method " + clazz.getName() + "#" + method.getName() + " must have at most 1 parameter");
                         } else if (count == 1) {
                             if (!(method.getParameters()[0].isAnnotationPresent(QueryParam.class) && Map.class.isAssignableFrom(method.getParameterTypes()[0]))) {
-                                throw new IllegalArgumentException();
+                                throw new IllegalArgumentException("Method " + clazz.getName() + "#" + method.getName() + "'s parameter should be like @QueryParam Map<String, String> xxx");
                             }
                         }
 
                         // 检查返回值合法性
                         if (!JsonElement.class.isAssignableFrom(method.getReturnType())) {
-                            throw new IllegalStateException("Route " + method + " must return JsonElement");
+                            throw new IllegalStateException("Route " + clazz.getName() + "#" + method.getName() + " must return JsonElement");
                         }
 
                         getMethods.add(method);
@@ -109,11 +109,12 @@ public class BeanFactory {
         Object bean = clazz.getDeclaredConstructor().newInstance();
         earlyBeans.put(clazz, bean);
 
+        // 执行注入
         for (Field field : beanDefinitions.get(clazz).fields) {
             field.setAccessible(true);
             // Sonnet类型不能当成组件被注入
             if (field.getType().isAnnotationPresent(Sonnet.class)) {
-                throw new Exception("@Sonnet type " + field.getType().getName() + " can not be inject via @Verse");
+                throw new IllegalStateException("@Sonnet type " + field.getType().getName() + " can not be inject via @Verse in " + clazz.getName());
             }
             field.set(bean, getBean(field.getType()));
         }

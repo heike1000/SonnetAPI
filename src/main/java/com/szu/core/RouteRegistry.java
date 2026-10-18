@@ -1,7 +1,7 @@
 package com.szu.core;
 
-import com.szu.annotation.GetRequest;
-import com.szu.annotation.PostRequest;
+import com.szu.annotation.GETRequest;
+import com.szu.annotation.POSTRequest;
 import com.szu.annotation.Sonnet;
 import com.szu.model.BeanDefinition;
 import com.szu.model.RouteMapper;
@@ -13,6 +13,7 @@ import java.util.Map;
 public class RouteRegistry {
     private final Map<Class<?>, BeanDefinition> beanDefinitions;
     private final Map<Class<?>, Object> beans;
+    private final Map<String, RouteMapper> routes = new HashMap<>();
 
     RouteRegistry(Map<Class<?>, Object> beans, Map<Class<?>, BeanDefinition> beanDefinitions) {
         this.beanDefinitions = beanDefinitions;
@@ -20,59 +21,51 @@ public class RouteRegistry {
     }
 
     public Map<String, RouteMapper> register() {
-        Map<String, RouteMapper> routes = new HashMap<>();
-
+        // 遍历definition，为每一个带有POST或GET的方法注册路由表
         for (BeanDefinition beanDefinition : beanDefinitions.values()) {
             // 判断是否为路由
             if (!beanDefinition.isRoute) continue;
-
             Class<?> clazz = beanDefinition.clazz;
             Object bean = beans.get(clazz);
-            String first = clazz.getAnnotation(Sonnet.class).value();
 
-            // 注册post方法
+            // 注册POST方法
             for (Method method : beanDefinition.postMethods) {
-                // 检查地址合法性
-                String last = method.getAnnotation(PostRequest.class).value();
-                if (first.isBlank() || last.isBlank()) {
-                    throw new IllegalStateException("Route path is empty");
-                }
-                if (!first.startsWith("/") || !last.startsWith("/")) {
-                    throw new IllegalStateException("Route path should be like /xxx");
-                }
-                String url = first + last;
-
-                // 不允许重复注册路径
-                if (routes.containsKey(url)) {
-                    throw new IllegalStateException("Duplicate route: " + url);
-                }
-
-                method.setAccessible(true);
-                routes.put(url, new RouteMapper(bean, method));
+                registerMethod(bean, method, "POST");
             }
 
-            // 注册get方法
+            // 注册GET方法
             for (Method method : beanDefinition.getMethods) {
-                // 检查地址合法性
-                String last = method.getAnnotation(GetRequest.class).value();
-                if (first.isBlank() || last.isBlank()) {
-                    throw new IllegalStateException("Route path is empty");
-                }
-                if (!first.startsWith("/") || !last.startsWith("/")) {
-                    throw new IllegalStateException("Route path should be like /xxx");
-                }
-                String url = first + last;
-
-                // 不允许重复注册路径
-                if (routes.containsKey(url)) {
-                    throw new IllegalStateException("Duplicate route: " + url);
-                }
-
-                method.setAccessible(true);
-                routes.put(url, new RouteMapper(bean, method));
+                registerMethod(bean, method, "GET");
             }
         }
 
         return routes;
+    }
+
+    private void registerMethod(Object bean, Method method, String methodType) {
+        // 检查地址合法性
+        String first = bean.getClass().getAnnotation(Sonnet.class).value();
+        String last = "";
+        if (methodType.equals("POST")) {
+            last = method.getAnnotation(POSTRequest.class).value();
+        } else if (methodType.equals("GET")) {
+            last = method.getAnnotation(GETRequest.class).value();
+        }
+        
+        if (first.isBlank() || last.isBlank()) {
+            throw new IllegalStateException("Route path is empty");
+        }
+        if (!first.startsWith("/") || !last.startsWith("/")) {
+            throw new IllegalStateException("Route path should be like /xxx");
+        }
+        String url = first + last;
+
+        // 不允许重复注册路径
+        if (routes.containsKey(url)) {
+            throw new IllegalStateException("Duplicate route: " + url);
+        }
+
+        method.setAccessible(true);
+        routes.put(url, new RouteMapper(bean, method));
     }
 }
