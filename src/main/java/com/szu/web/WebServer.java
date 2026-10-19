@@ -1,8 +1,6 @@
 package com.szu.web;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.szu.model.Result;
 import com.szu.model.RouteMapper;
 import io.undertow.Undertow;
@@ -20,7 +18,7 @@ public class WebServer implements AutoCloseable {
 
     public WebServer(int port, Map<String, RouteMapper> routes) {
         this.port = port;
-        this.routes = Map.copyOf(routes);
+        this.routes = routes;
     }
 
     public void start() {
@@ -66,13 +64,25 @@ public class WebServer implements AutoCloseable {
 
     // POST方法反射调用
     private Result POSTInvoke(RouteMapper mapper, String jsonBody) {
-        try {
-            int count = mapper.method.getParameterCount();
-            Object[] args = new Object[count];
-            if (count == 1) {
-                args[0] = JsonParser.parseString(jsonBody).getAsJsonObject();
+        // 空body视为无参数
+        JsonObject jsonObject;
+        if (jsonBody == null || jsonBody.trim().isEmpty()) {
+            jsonObject = new JsonObject();
+        } else {
+            // 非空body必须是合法JSON
+            try {
+                JsonElement parsed = JsonParser.parseString(jsonBody);
+                if (!parsed.isJsonObject()) {
+                    return new Result(400, gson.toJson("Request body must be a JSON object or empty"));
+                }
+                jsonObject = parsed.getAsJsonObject();
+            } catch (JsonSyntaxException e) {
+                return new Result(400, gson.toJson("Invalid JSON body: " + e.getMessage()));
             }
+        }
 
+        try {
+            Object[] args = new Object[]{jsonObject};
             JsonElement result = (JsonElement) mapper.method.invoke(mapper.bean, args);
             return new Result(200, result == null ? "null" : result.toString());
         } catch (Exception e) {
@@ -83,16 +93,17 @@ public class WebServer implements AutoCloseable {
     // GET方法反射调用
     private Result GETInvoke(RouteMapper mapper, Map<String, Deque<String>> queryParams) {
         try {
-            int count = mapper.method.getParameterCount();
-            Object[] args = new Object[count];
-            if (count == 1) {
-                Map<String, String> params = new HashMap<>();
-                for (Map.Entry<String, Deque<String>> e : queryParams.entrySet()) {
-                    Deque<String> values = e.getValue();
-                    params.put(e.getKey(), values.peekFirst());
-                }
-                args[0] = params;
+            if (queryParams == null) {
+                queryParams = Collections.emptyMap();
             }
+
+            Object[] args = new Object[1];
+            Map<String, String> params = new HashMap<>();
+            for (Map.Entry<String, Deque<String>> entry : queryParams.entrySet()) {
+                Deque<String> values = entry.getValue();
+                params.put(entry.getKey(), values.peekFirst());
+            }
+            args[0] = params;
 
             JsonElement result = (JsonElement) mapper.method.invoke(mapper.bean, args);
             return new Result(200, result == null ? "null" : result.toString());
