@@ -82,10 +82,9 @@ public class WebServer implements AutoCloseable {
         }
 
         try {
-            Object[] args = new Object[]{jsonObject};
-            JsonElement result = (JsonElement) mapper.method.invoke(mapper.bean, args);
+            JsonElement result = mapper.invoker.invoke(jsonObject);
             return new Result(200, result == null ? "null" : result.toString());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return new Result(500, gson.toJson("Error while invoking"));
         }
     }
@@ -97,17 +96,15 @@ public class WebServer implements AutoCloseable {
                 queryParams = Collections.emptyMap();
             }
 
-            Object[] args = new Object[1];
             Map<String, String> params = new HashMap<>();
             for (Map.Entry<String, Deque<String>> entry : queryParams.entrySet()) {
                 Deque<String> values = entry.getValue();
                 params.put(entry.getKey(), values.peekFirst());
             }
-            args[0] = params;
 
-            JsonElement result = (JsonElement) mapper.method.invoke(mapper.bean, args);
+            JsonElement result = mapper.invoker.invoke(params);
             return new Result(200, result == null ? "null" : result.toString());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return new Result(500, gson.toJson("Error while invoking"));
         }
     }
