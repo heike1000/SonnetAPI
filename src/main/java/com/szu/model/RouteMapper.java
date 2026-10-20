@@ -18,6 +18,7 @@ public class RouteMapper {
     public RouteMapper(Object bean, Method method) {
         this.bean = bean;
         this.method = method;
+        // 使用methodhandler加快反射调用
         this.invoker = createInvoker(bean, method);
     }
 

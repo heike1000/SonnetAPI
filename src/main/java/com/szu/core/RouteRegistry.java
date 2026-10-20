@@ -21,7 +21,7 @@ public class RouteRegistry {
     }
 
     public Map<String, RouteMapper> register() {
-        // 遍历definition，为每一个带有POST或GET的方法注册路由表
+        // 遍历definition，将每一个POST或GET的方法写入路由表
         for (BeanDefinition beanDefinition : beanDefinitions.values()) {
             // 判断是否为路由
             if (!beanDefinition.isRoute) continue;

@@ -71,7 +71,7 @@ public class Couplet {
         }
     }
 
-    // 通过过期时间最小堆间接获取过期元素，避免锁
+    // 通过过期时间最小堆间接获取过期元素，避免全局锁
     public void purgeExpired() {
         long now = System.currentTimeMillis();
         while (true) {
@@ -125,7 +125,7 @@ public class Couplet {
         _put(key, CoupletType.List, data, expireTime);
     }
 
-    // 近似LRU，避免锁
+    // 近似LRU，避免全局锁
     private void evictIfNeeded() {
         if (size.get() <= maxSize) {
             return;

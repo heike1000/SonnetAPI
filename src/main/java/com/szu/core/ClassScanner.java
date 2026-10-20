@@ -16,18 +16,18 @@ public class ClassScanner {
     }
 
     public List<Class<?>> getClasses() throws Exception {
-        String path = basePackage.replace('.', '/');
         // 获取target目录下对应路径
+        String path = basePackage.replace('.', '/');
         Enumeration<URL> resources = Thread.currentThread().getContextClassLoader().getResources(path);
 
         List<Class<?>> classes = new ArrayList<>();
-        Set<String> seen = new HashSet<>();
+        Set<String> seen = new HashSet<>();  // 去重
 
         while (resources.hasMoreElements()) {
             URL resource = resources.nextElement();
             String protocol = resource.getProtocol();
 
-            // 支持双扫
+            // 区分编译前和编译后
             if ("file".equals(protocol)) {
                 scanDirectory(resource, basePackage, classes, seen);
             } else if ("jar".equals(protocol)) {
@@ -44,6 +44,7 @@ public class ClassScanner {
         Deque<File> queue = new ArrayDeque<>();
         queue.add(root);
 
+        // 广度优先遍历
         while (!queue.isEmpty()) {
             File directory = queue.poll();
             File[] files = directory.listFiles();
@@ -60,10 +61,11 @@ public class ClassScanner {
                 String relative = root.toURI().relativize(file.toURI()).getPath();
                 String classFileName = relative.substring(0, relative.length() - ".class".length());
 
-                // 跨系统支持并拼接
+                // 拼接
                 String classSuffix = classFileName.replace('/', '.').replace('\\', '.');
                 String className = basePackage + "." + classSuffix;
 
+                // 去重并加入元信息
                 Class<?> clazz = Class.forName(className);
                 if (seen.add(className)) {
                     classes.add(clazz);
