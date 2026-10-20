@@ -47,8 +47,7 @@ public class Couplet {
     private final ConcurrentHashMap<String, Value> coupletData;
     private final AtomicLong size = new AtomicLong(0);
     private final long maxSize;
-    // 过期时间最小堆，保证堆顶是离过期最近的元素
-    private final PriorityQueue<Expiry> expiryQueue = new PriorityQueue<>();
+    private final PriorityQueue<Expiry> expiryQueue = new PriorityQueue<>();// 过期时间最小堆，保证堆顶是离过期最近的元素
     private final Object expiryLock = new Object();
     private static final int SAMPLE_SIZE = 5;
 
@@ -59,6 +58,7 @@ public class Couplet {
         this.maxSize = maxSize;
         this.coupletData = new ConcurrentHashMap<>();
 
+        // 开启自动清理线程
         if (autoDeletionTime != null) {
             ScheduledExecutorService cleaner = Executors.newSingleThreadScheduledExecutor(r -> {
                 Thread thread = new Thread(r, "Couplet-cleaner");
@@ -71,9 +71,11 @@ public class Couplet {
         }
     }
 
+    // 通过过期时间最小堆间接获取过期元素，避免锁
     public void purgeExpired() {
         long now = System.currentTimeMillis();
         while (true) {
+            // 提取堆顶元素，过期则清理
             Expiry head;
             synchronized (expiryLock) {
                 head = expiryQueue.peek();
@@ -94,7 +96,6 @@ public class Couplet {
 
     private void _put(String key, CoupletType type, Object data, Long expireTime) {
         long expireAt = (expireTime == null) ? Long.MAX_VALUE : System.currentTimeMillis() + expireTime * 1000L;
-
         Value old = coupletData.put(key, new Value(type, data, expireAt));
         if (old == null) {
             size.incrementAndGet();
@@ -124,7 +125,7 @@ public class Couplet {
         _put(key, CoupletType.List, data, expireTime);
     }
 
-    // 近似LRU
+    // 近似LRU，避免锁
     private void evictIfNeeded() {
         if (size.get() <= maxSize) {
             return;
