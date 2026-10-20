@@ -1,41 +1,61 @@
 package com.szu.mod;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Couplet {
     public enum CoupletType {
         String, Integer, Double, List
     }
 
-    static class Value {
+    static final class Value {
         final CoupletType type;
         final Object data;
-        final Long expireAt;
+        final long expireAt;
+        volatile long lastAccess;
 
-        Value(CoupletType type, Object data, Long expireAt) {
+        Value(CoupletType type, Object data, long expireAt) {
             this.type = type;
             this.data = data;
             this.expireAt = expireAt;
+            this.lastAccess = System.nanoTime();
         }
     }
 
-    private final Map<String, Value> coupletData;
+    private static final class Expiry implements Comparable<Expiry> {
+        final String key;
+        final long expireAt;
+        Expiry(String key, long expireAt) {
+            this.key = key;
+            this.expireAt = expireAt;
+        }
+        @Override
+        public int compareTo(Expiry o) {
+            return Long.compare(this.expireAt, o.expireAt);
+        }
+    }
+
+    private final ConcurrentHashMap<String, Value> coupletData;
+    private final AtomicLong size = new AtomicLong(0);
     private final long maxSize;
 
+    private final PriorityQueue<Expiry> expiryQueue = new PriorityQueue<>();
+    private final Object expiryLock = new Object();
+
+    private static final int SAMPLE_SIZE = 5;
+
     public Couplet(long maxSize, Long autoDeletionTime) {
+        if (maxSize <= 0) {
+            throw new IllegalArgumentException("maxSize must be > 0");
+        }
         this.maxSize = maxSize;
-        // 按访问顺序排序，最近访问的移到尾部。相当于LRU
-        this.coupletData = new LinkedHashMap<String, Value>(16, 0.75f, true) {
-            @Override
-            protected boolean removeEldestEntry(Map.Entry<String, Value> eldest) {
-                return size() > Couplet.this.maxSize;
-            }
-        };
+        this.coupletData = new ConcurrentHashMap<>();
 
         if (autoDeletionTime != null) {
             ScheduledExecutorService cleaner = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -43,29 +63,47 @@ public class Couplet {
                 thread.setDaemon(true);
                 return thread;
             });
-            cleaner.scheduleWithFixedDelay(this::purgeExpired, autoDeletionTime, autoDeletionTime, TimeUnit.SECONDS);
+            cleaner.scheduleWithFixedDelay(
+                    this::purgeExpired,
+                    autoDeletionTime, autoDeletionTime, TimeUnit.SECONDS);
         }
     }
 
     public void purgeExpired() {
         long now = System.currentTimeMillis();
-        synchronized (coupletData) {
-            var iterator = coupletData.entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<String, Value> entry = iterator.next();
-                Value value = entry.getValue();
-                if (value.expireAt != null && value.expireAt <= now) {
-                    iterator.remove();
+        while (true) {
+            Expiry head;
+            synchronized (expiryLock) {
+                head = expiryQueue.peek();
+                if (head == null || head.expireAt > now) {
+                    return;
+                }
+                expiryQueue.poll();
+            }
+            Value value = coupletData.get(head.key);
+            if (value != null && value.expireAt == head.expireAt) {
+                if (coupletData.remove(head.key, value)) {
+                    size.decrementAndGet();
                 }
             }
         }
     }
 
     private void _put(String key, CoupletType type, Object data, Long expireTime) {
-        Long expireAt = expireTime == null ? null : System.currentTimeMillis() + expireTime * 1000L;
-        synchronized (coupletData) {
-            coupletData.put(key, new Value(type, data, expireAt));
+        long expireAt = (expireTime == null)
+                ? Long.MAX_VALUE
+                : System.currentTimeMillis() + expireTime * 1000L;
+
+        Value old = coupletData.put(key, new Value(type, data, expireAt));
+        if (old == null) {
+            size.incrementAndGet();
         }
+        if (expireAt != Long.MAX_VALUE) {
+            synchronized (expiryLock) {
+                expiryQueue.offer(new Expiry(key, expireAt));
+            }
+        }
+        evictIfNeeded();
     }
 
     public void put(String key, String data, Long expireTime) {
@@ -80,27 +118,64 @@ public class Couplet {
         _put(key, CoupletType.Double, data, expireTime);
     }
 
+    @SuppressWarnings("rawtypes")
     public void put(String key, List data, Long expireTime) {
         _put(key, CoupletType.List, data, expireTime);
     }
 
-    public Object get(String key) {
-        synchronized (coupletData) {
-            Value value = coupletData.get(key);
-            if (value == null) {
-                return null;
+    private void evictIfNeeded() {
+        if (size.get() <= maxSize) {
+            return;
+        }
+        while (size.get() > maxSize) {
+            String victim = null;
+            long oldest = Long.MAX_VALUE;
+            int samples = 0;
+            for (Map.Entry<String, Value> e : coupletData.entrySet()) {
+                if (samples++ >= SAMPLE_SIZE) {
+                    break;
+                }
+                long time = e.getValue().lastAccess;
+                if (time < oldest) {
+                    oldest = time;
+                    victim = e.getKey();
+                }
             }
-            if (value.expireAt != null && value.expireAt <= System.currentTimeMillis()) {
-                coupletData.remove(key);
-                return null;
+
+            if (victim == null) {
+                return;
             }
-            return value.data;
+            Value removed = coupletData.remove(victim);
+            if (removed != null) {
+                size.decrementAndGet();
+            }
         }
     }
 
-    public boolean remove(String key) {
-        synchronized (coupletData) {
-            return coupletData.remove(key) != null;
+    public Object get(String key) {
+        Value value = coupletData.get(key);
+        if (value == null) {
+            return null;
         }
+        if (value.expireAt <= System.currentTimeMillis()) {
+            coupletData.remove(key, value);
+            size.decrementAndGet();
+            return null;
+        }
+        value.lastAccess = System.nanoTime();
+        return value.data;
+    }
+
+    public boolean remove(String key) {
+        Value removed = coupletData.remove(key);
+        if (removed != null) {
+            size.decrementAndGet();
+            return true;
+        }
+        return false;
+    }
+
+    public int size() {
+        return (int) Math.min(size.get(), Integer.MAX_VALUE);
     }
 }
