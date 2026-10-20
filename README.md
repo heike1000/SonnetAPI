@@ -24,6 +24,6 @@ Sonnet 用一组富有诗意的注解来表达最朴素的概念：
 📦 @JsonBody：POST 方法参数，类型必须为 JsonObject  
 🔎 @QueryParam：GET 方法参数，类型必须为 Map<String, String>  
 
-🗃️ 内置缓存 Couplet
+🗃️ 内置缓存 Couplet  
 🔁 随机 LRU，超过 maxSize 自动淘汰  
 🧹 可选的后台清理线程（守护线程，不阻塞 JVM 退出）  
