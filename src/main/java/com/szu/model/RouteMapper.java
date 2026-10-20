@@ -21,8 +21,6 @@ public class RouteMapper {
         this.invoker = createInvoker(bean, method);
     }
 
-
-
     private static HandlerInvoker createInvoker(Object bean, Method method) {
         try {
             MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(bean.getClass(), MethodHandles.lookup());

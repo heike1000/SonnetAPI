@@ -6,11 +6,8 @@ import com.szu.model.RouteMapper;
 import java.util.*;
 
 public class SonnetAPIContext {
-    // bean信息表
     private final Map<Class<?>, BeanDefinition> beanDefinitions;
-    // IOC容器
     private final Map<Class<?>, Object> beans;
-    // 路由表
     private final Map<String, RouteMapper> routes;
 
     public SonnetAPIContext(String basePackage) throws Exception {
