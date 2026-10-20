@@ -10,13 +10,13 @@ import java.util.Map;
 @Sonnet("/api")
 public class ExampleAPI {
     @Refrain
-    ExampleFunction exampleFunction;
+    ExampleClass exampleClass;
 
     @GETRequest("/hello")
     public JsonObject response(@QueryParam Map<String, String> Params) {
         String name = Params.get("name");
         JsonObject result = new JsonObject();
-        result.addProperty("message", exampleFunction.hello() + " " + name);
+        result.addProperty("age", exampleClass.getAge(name));
         return result;
     }
 }
