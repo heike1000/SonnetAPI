@@ -6,15 +6,22 @@ import java.lang.invoke.*;
 import java.lang.reflect.Method;
 
 public class RouteMapper {
+    @FunctionalInterface
+    public interface HandlerInvoker {
+        JsonElement invoke(Object arg) throws Throwable;
+    }
+
     public final Object bean;
     public final Method method;
-    public final HandlerInvoker invoker; // 新增
+    public final HandlerInvoker invoker;
 
     public RouteMapper(Object bean, Method method) {
         this.bean = bean;
         this.method = method;
         this.invoker = createInvoker(bean, method);
     }
+
+
 
     private static HandlerInvoker createInvoker(Object bean, Method method) {
         try {

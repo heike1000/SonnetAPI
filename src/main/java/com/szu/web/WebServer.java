@@ -1,7 +1,6 @@
 package com.szu.web;
 
 import com.google.gson.*;
-import com.szu.model.Result;
 import com.szu.model.RouteMapper;
 import io.undertow.Undertow;
 import io.undertow.server.HttpServerExchange;
@@ -11,6 +10,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class WebServer implements AutoCloseable {
+    static class Result {
+        public final int status;
+        public final String body;
+
+        public Result(int status, String body) {
+            this.status = status;
+            this.body = body;
+        }
+    }
+
     private static final Gson gson = new Gson();
     private final int port;
     private final Map<String, RouteMapper> routes;
