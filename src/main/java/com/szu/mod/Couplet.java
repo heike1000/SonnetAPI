@@ -14,7 +14,7 @@ public class Couplet {
         String, Integer, Double, List
     }
 
-    static final class Value {
+    static class Value {
         final CoupletType type;
         final Object data;
         final long expireAt;
@@ -28,26 +28,27 @@ public class Couplet {
         }
     }
 
-    private static final class Expiry implements Comparable<Expiry> {
+    static class Expiry implements Comparable<Expiry> {
         final String key;
         final long expireAt;
         Expiry(String key, long expireAt) {
             this.key = key;
             this.expireAt = expireAt;
         }
+
+        // 让元素可以被排序
         @Override
-        public int compareTo(Expiry o) {
-            return Long.compare(this.expireAt, o.expireAt);
+        public int compareTo(Expiry expiry) {
+            return Long.compare(this.expireAt, expiry.expireAt);
         }
     }
 
     private final ConcurrentHashMap<String, Value> coupletData;
     private final AtomicLong size = new AtomicLong(0);
     private final long maxSize;
-
+    // 过期时间最小堆，保证堆顶是离过期最近的元素
     private final PriorityQueue<Expiry> expiryQueue = new PriorityQueue<>();
     private final Object expiryLock = new Object();
-
     private static final int SAMPLE_SIZE = 5;
 
     public Couplet(long maxSize, Long autoDeletionTime) {
@@ -80,6 +81,7 @@ public class Couplet {
                 }
                 expiryQueue.poll();
             }
+
             Value value = coupletData.get(head.key);
             if (value != null && value.expireAt == head.expireAt) {
                 if (coupletData.remove(head.key, value)) {
@@ -90,9 +92,7 @@ public class Couplet {
     }
 
     private void _put(String key, CoupletType type, Object data, Long expireTime) {
-        long expireAt = (expireTime == null)
-                ? Long.MAX_VALUE
-                : System.currentTimeMillis() + expireTime * 1000L;
+        long expireAt = (expireTime == null) ? Long.MAX_VALUE : System.currentTimeMillis() + expireTime * 1000L;
 
         Value old = coupletData.put(key, new Value(type, data, expireAt));
         if (old == null) {
@@ -123,6 +123,7 @@ public class Couplet {
         _put(key, CoupletType.List, data, expireTime);
     }
 
+    // 近似LRU
     private void evictIfNeeded() {
         if (size.get() <= maxSize) {
             return;
@@ -131,20 +132,21 @@ public class Couplet {
             String victim = null;
             long oldest = Long.MAX_VALUE;
             int samples = 0;
-            for (Map.Entry<String, Value> e : coupletData.entrySet()) {
+            for (Map.Entry<String, Value> entry : coupletData.entrySet()) {
                 if (samples++ >= SAMPLE_SIZE) {
                     break;
                 }
-                long time = e.getValue().lastAccess;
+                long time = entry.getValue().lastAccess;
                 if (time < oldest) {
                     oldest = time;
-                    victim = e.getKey();
+                    victim = entry.getKey();
                 }
             }
 
             if (victim == null) {
                 return;
             }
+
             Value removed = coupletData.remove(victim);
             if (removed != null) {
                 size.decrementAndGet();
