@@ -29,7 +29,7 @@ public class Couplet {
 
     public Couplet(long maxSize, Long autoDeletionTime) {
         this.maxSize = maxSize;
-        // 按访问顺序排序，最近访问的移到尾部
+        // 按访问顺序排序，最近访问的移到尾部。相当于LRU
         this.coupletData = new LinkedHashMap<String, Value>(16, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<String, Value> eldest) {
