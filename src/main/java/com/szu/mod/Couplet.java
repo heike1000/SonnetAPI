@@ -43,10 +43,10 @@ public class Couplet {
 
     public void purgeExpired() {
         long now = System.currentTimeMillis();
-        for (Map.Entry<String, Value> e : coupletData.entrySet()) {
-            Value v = e.getValue();
-            if (v.expireAt != null && v.expireAt <= now) {
-                coupletData.remove(e.getKey(), v);
+        for (Map.Entry<String, Value> entry : coupletData.entrySet()) {
+            Value value = entry.getValue();
+            if (value.expireAt != null && value.expireAt <= now) {
+                coupletData.remove(entry.getKey(), value);
             }
         }
     }

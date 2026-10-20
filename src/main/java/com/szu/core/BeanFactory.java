@@ -96,7 +96,7 @@ public class BeanFactory {
         if (beans.containsKey(clazz)) return beans.get(clazz);
         if (earlyBeans.containsKey(clazz)) return earlyBeans.get(clazz);
 
-        // 目标可能漏加注解
+        // 目标漏加注解，报错
         if (beanDefinitions.get(clazz) == null) {
             throw new IllegalStateException("No bean definition found for " + clazz.getName());
         }
@@ -112,6 +112,7 @@ public class BeanFactory {
             if (field.getType().isAnnotationPresent(Sonnet.class)) {
                 throw new IllegalStateException("@Sonnet type " + field.getType().getName() + " can not be inject via @Verse in " + clazz.getName());
             }
+            //递归调用
             field.set(bean, getBean(field.getType()));
         }
 
