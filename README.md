@@ -1,7 +1,7 @@
-🎼 Sonnet 框架
+🎼 SonnetAPI 框架
 面向单机的高性能 Java API 服务器框架。
 
-Sonnet 是一个轻量级、几乎零依赖的 Java API 框架，灵感取自"十四行诗（Sonnet）"的优雅与规整。  
+SonnetAPI 是一个轻量级、几乎零依赖的 Java API 框架，灵感取自"十四行诗（Sonnet）"的优雅与规整。  
 它通过注解驱动完成"类扫描 → Bean 装配 → 路由注册 → HTTP 请求分发"的全流程，让你专注于业务逻辑本身。  
 
 ✨ 特性一览  
