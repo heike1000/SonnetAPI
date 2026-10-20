@@ -25,16 +25,15 @@ public class Couplet {
 
     private final Map<String, Value> coupletData = new ConcurrentHashMap<>();
     private final Long maxSize;
-    private final ScheduledExecutorService cleaner =
-            Executors.newSingleThreadScheduledExecutor(r -> {
-                Thread thread = new Thread(r, "Couplet-cleaner");
-                thread.setDaemon(true);
-                return thread;
-            });
 
     public Couplet(Long maxSize, Long autoDeletionTime) {
         this.maxSize = maxSize;
         if (autoDeletionTime != null) {
+            ScheduledExecutorService cleaner = Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread thread = new Thread(r, "Couplet-cleaner");
+                thread.setDaemon(true);
+                return thread;
+            });
             cleaner.scheduleWithFixedDelay(this::purgeExpired,
                     autoDeletionTime,
                     autoDeletionTime,
