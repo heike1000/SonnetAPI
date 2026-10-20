@@ -28,6 +28,7 @@ public class Couplet {
         }
     }
 
+    // 过期时间最小堆元素
     static class Expiry implements Comparable<Expiry> {
         final String key;
         final long expireAt;
@@ -165,6 +166,7 @@ public class Couplet {
             return null;
         }
         value.lastAccess = System.nanoTime();
+
         return value.data;
     }
 
@@ -174,6 +176,7 @@ public class Couplet {
             size.decrementAndGet();
             return true;
         }
+
         return false;
     }
 
