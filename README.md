@@ -67,8 +67,7 @@ public class Main {
 
 ✨ 特性一览  
 1.轻量 IoC：基于字段的依赖注入，支持循环依赖（二级缓存方案）  
-2.注解路由：@Sonnet + @POSTRequest / @GETRequest 声明式注册路由  
-3.反射优化：路由调用优先使用 MethodHandle，减少反射开销  
-4.Undertow 内核：基于 Undertow 的高并发 IO，自动从 IO 线程派发到工作线程  
-5.内置缓存 Couplet：Couplet 提供带过期时间与随机 LRU 淘汰的本地缓存以及可选的后台清理线程    
-6.JSON 原生：基于 Gson，请求体与响应体统一使用 JsonObject / JsonElement
+2.反射优化：路由调用优先使用 MethodHandle，减少反射开销  
+3.Undertow 内核：基于 Undertow 的高并发 IO，自动从 IO 线程派发到工作线程  
+4.内置缓存 Couplet：Couplet 提供带过期时间与随机 LRU 淘汰的本地缓存以及可选的后台清理线程  
+5.强格式限制：任何不规范写法会在启动期报错

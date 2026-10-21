@@ -53,16 +53,16 @@ public class RouteRegistry {
         }
         
         if (first.isBlank() || last.isBlank()) {
-            throw new IllegalStateException("Route path is empty");
+            throw new IllegalStateException("Route path can't be empty in " + bean.getClass().getName() + "#" + method.getName());
         }
         if (!first.startsWith("/") || !last.startsWith("/")) {
-            throw new IllegalStateException("Route path should be like /xxx");
+            throw new IllegalStateException("Route path should be like /xxx in " + bean.getClass().getName() + "#" + method.getName());
         }
         String url = first + last;
 
         // 不允许重复注册路径
         if (routes.containsKey(url)) {
-            throw new IllegalStateException("Duplicate route: " + url);
+            throw new IllegalStateException("Duplicate route " + url);
         }
 
         method.setAccessible(true);

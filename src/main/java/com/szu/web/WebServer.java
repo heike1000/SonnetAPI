@@ -20,6 +20,7 @@ public class WebServer implements AutoCloseable {
         }
     }
 
+    private static final int MAX_BODY_SIZE = 1024 * 1024;
     private static final Gson gson = new Gson();
     private final int port;
     private final Map<String, RouteMapper> routes;
@@ -45,6 +46,13 @@ public class WebServer implements AutoCloseable {
         ex.startBlocking();
         String path = ex.getRequestPath();
         String method = ex.getRequestMethod().toString();
+        long contentLength = ex.getRequestContentLength();
+        if (contentLength > MAX_BODY_SIZE) {
+            ex.setStatusCode(413);
+            ex.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+            ex.getResponseSender().send(gson.toJson("Request body too large"));
+            return;
+        }
         String body = new String(ex.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
         Result result;

@@ -29,13 +29,7 @@ public class RouteMapper {
             MethodHandle bound = mh.bindTo(bean);
             return arg -> (JsonElement) bound.invoke(arg);
         } catch (Throwable e) {
-            return arg -> {
-                try {
-                    return (JsonElement) method.invoke(bean, arg);
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
-                }
-            };
+            throw new RuntimeException(e);
         }
     }
 }

@@ -98,7 +98,7 @@ public class BeanFactory {
 
         // 目标漏加注解，报错
         if (beanDefinitions.get(clazz) == null) {
-            throw new IllegalStateException("No bean definition found for " + clazz.getName());
+            throw new IllegalStateException("Check your annotations. No bean definition found for " + clazz.getName());
         }
 
         // 创建bean，加入二级缓存
