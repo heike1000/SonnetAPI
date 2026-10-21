@@ -5,8 +5,6 @@ import com.szu.annotation.Refrain;
 import com.szu.annotation.Sonnet;
 import com.szu.annotation.*;
 
-import java.util.Map;
-
 @Sonnet("/api")
 public class ExampleAPI {
     @Refrain
