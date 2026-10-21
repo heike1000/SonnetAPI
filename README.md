@@ -16,7 +16,7 @@ public class ExampleClass {
         couplet.put("Peter", 20, 100L); // 100L：过期时间
     }
 
-    public int getAge(String name) {
+    public int get(String name) {
         return (int) couplet.get(name);
     }
 }
@@ -34,11 +34,11 @@ public class ExampleAPI {
     @Refrain
     ExampleClass exampleClass;
 
-    @GETRequest("/hello")
-    public JsonObject response(@QueryParam Map<String, String> Params) {
+    @GETRequest("/getAge")
+    public JsonObject getAge(@QueryParam Map<String, String> Params) {
         String name = Params.get("name");
         JsonObject result = new JsonObject();
-        result.addProperty("age", exampleClass.getAge(name));
+        result.addProperty("age", exampleClass.get(name));
         return result;
     }
 }

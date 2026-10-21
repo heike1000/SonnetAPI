@@ -12,11 +12,11 @@ public class ExampleAPI {
     @Refrain
     ExampleClass exampleClass;
 
-    @GETRequest("/hello")
-    public JsonObject response(@QueryParam Map<String, String> Params) {
+    @GETRequest("/getAge")
+    public JsonObject getAge(@QueryParam Map<String, String> Params) {
         String name = Params.get("name");
         JsonObject result = new JsonObject();
-        result.addProperty("age", exampleClass.getAge(name));
+        result.addProperty("age", exampleClass.get(name));
         return result;
     }
 }
