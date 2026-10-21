@@ -5,10 +5,10 @@ import com.szu.mod.Couplet;
 
 @Verse
 public class ExampleClass {
-    Couplet couplet = new Couplet(1000, 100L); // 1000：最大容量、100L：后台清理线程唤醒间隔
+    Couplet couplet = new Couplet(1000, null);
 
     public ExampleClass() {
-        couplet.put("Peter", 20, 100L); // 100L：过期时间
+        couplet.put("Peter", 20, null);
     }
 
     public int get(String name) {
