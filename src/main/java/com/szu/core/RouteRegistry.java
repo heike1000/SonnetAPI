@@ -53,10 +53,10 @@ public class RouteRegistry {
         }
         
         if (first.isBlank() || last.isBlank()) {
-            throw new IllegalStateException("Route path can't be empty in " + bean.getClass().getName() + "#" + method.getName());
+            throw new IllegalStateException("Route path can't be empty in " + bean.getClass().getName() + "::" + method.getName());
         }
-        if (!first.startsWith("/") || !last.startsWith("/")) {
-            throw new IllegalStateException("Route path should be like /xxx in " + bean.getClass().getName() + "#" + method.getName());
+        if (!first.startsWith("/") || !last.startsWith("/") || first.endsWith("/") || last.endsWith("/")) {
+            throw new IllegalStateException("Route path should be like /xxx in " + bean.getClass().getName() + "::" + method.getName());
         }
         String url = first + last;
 

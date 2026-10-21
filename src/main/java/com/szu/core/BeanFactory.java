@@ -45,14 +45,14 @@ public class BeanFactory {
                         // 检查参数合法性
                         int count = method.getParameterCount();
                         if (count != 1) {
-                            throw new IllegalArgumentException("Method " + clazz.getName() + "#" + method.getName() + " should have 1 parameter");
+                            throw new IllegalArgumentException("Method " + clazz.getName() + "::" + method.getName() + " should have 1 parameter");
                         } else if (!(method.getParameters()[0].isAnnotationPresent(JsonBody.class) && method.getParameterTypes()[0] == JsonObject.class)) {
-                            throw new IllegalArgumentException("Method " + clazz.getName() + "#" + method.getName() + "'s parameter should be like @JsonBody JsonObject xxx");
+                            throw new IllegalArgumentException("Method " + clazz.getName() + "::" + method.getName() + "'s parameter should be like @JsonBody JsonObject xxx");
                         }
 
                         // 检查返回值合法性
                         if (!JsonElement.class.isAssignableFrom(method.getReturnType())) {
-                            throw new IllegalStateException("Route " + clazz.getName() + "#" + method.getName() + " must return JsonElement");
+                            throw new IllegalStateException("Route " + clazz.getName() + "::" + method.getName() + " must return JsonElement");
                         }
 
                         postMethods.add(method);
@@ -60,14 +60,14 @@ public class BeanFactory {
                         // 检查参数合法性
                         int count = method.getParameterCount();
                         if (count != 1) {
-                            throw new IllegalArgumentException("Method " + clazz.getName() + "#" + method.getName() + " should have 1 parameter");
+                            throw new IllegalArgumentException("Method " + clazz.getName() + "::" + method.getName() + " should have 1 parameter");
                         } else if (!(method.getParameters()[0].isAnnotationPresent(QueryParam.class) && Map.class.isAssignableFrom(method.getParameterTypes()[0]))) {
-                            throw new IllegalArgumentException("Method " + clazz.getName() + "#" + method.getName() + "'s parameter should be like @QueryParam Map<String, String> xxx");
+                            throw new IllegalArgumentException("Method " + clazz.getName() + "::" + method.getName() + "'s parameter should be like @QueryParam Map<String, String> xxx");
                         }
 
                         // 检查返回值合法性
                         if (!JsonElement.class.isAssignableFrom(method.getReturnType())) {
-                            throw new IllegalStateException("Route " + clazz.getName() + "#" + method.getName() + " must return JsonElement");
+                            throw new IllegalStateException("Route " + clazz.getName() + "::" + method.getName() + " must return JsonElement");
                         }
 
                         getMethods.add(method);
