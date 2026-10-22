@@ -3,10 +3,7 @@ package com.szu.mod;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Couplet {
@@ -120,7 +117,6 @@ public class Couplet {
         _put(key, CoupletType.Double, data, expireTime);
     }
 
-    @SuppressWarnings("rawtypes")
     public void put(String key, List data, Long expireTime) {
         _put(key, CoupletType.List, data, expireTime);
     }
@@ -134,21 +130,31 @@ public class Couplet {
             String victim = null;
             long oldest = Long.MAX_VALUE;
             int samples = 0;
+            // 保证近似均匀随机地抽取样本
+            long currentSize = size.get();
+            if (currentSize <= 0) {
+                return;
+            }
+            double sampleRate = Math.min(1.0, (double) SAMPLE_SIZE / currentSize);
+            ThreadLocalRandom random = ThreadLocalRandom.current();
+
             for (Map.Entry<String, Value> entry : coupletData.entrySet()) {
-                if (samples++ >= SAMPLE_SIZE) {
+                if (samples >= SAMPLE_SIZE) {
                     break;
                 }
-                long time = entry.getValue().lastAccess;
-                if (time < oldest) {
-                    oldest = time;
-                    victim = entry.getKey();
+                if (random.nextDouble() < sampleRate) {
+                    samples++;
+                    long time = entry.getValue().lastAccess;
+                    if (time < oldest) {
+                        oldest = time;
+                        victim = entry.getKey();
+                    }
                 }
             }
 
             if (victim == null) {
                 return;
             }
-
             Value removed = coupletData.remove(victim);
             if (removed != null) {
                 size.decrementAndGet();
