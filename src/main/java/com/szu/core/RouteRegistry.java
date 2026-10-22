@@ -29,12 +29,12 @@ public class RouteRegistry {
             Object bean = beans.get(clazz);
 
             // 注册POST方法
-            for (Method method : beanDefinition.postMethods) {
+            for (Method method : beanDefinition.POSTMethods) {
                 registerMethod(bean, method, "POST");
             }
 
             // 注册GET方法
-            for (Method method : beanDefinition.getMethods) {
+            for (Method method : beanDefinition.GETMethods) {
                 registerMethod(bean, method, "GET");
             }
         }

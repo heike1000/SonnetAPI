@@ -5,17 +5,17 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 public class BeanDefinition {
-    public final Class<?> clazz;
-    public final List<Field> fields;
-    public final boolean isRoute;
-    public final List<Method> postMethods;
-    public final List<Method> getMethods;
+    public final Class<?> clazz; // 类元信息
+    public final List<Field> fields; // 字段集合
+    public final boolean isRoute; // 是否为路由
+    public final List<Method> POSTMethods; // POST方法合集
+    public final List<Method> GETMethods; // GET方法合集
 
-    public BeanDefinition(Class<?> clazz, List<Field> fields, boolean isRoute, List<Method> postMethods, List<Method> getMethods) {
+    public BeanDefinition(Class<?> clazz, List<Field> fields, boolean isRoute, List<Method> POSTMethods, List<Method> GETMethods) {
         this.clazz = clazz;
         this.fields = fields;
         this.isRoute = isRoute;
-        this.postMethods = postMethods;
-        this.getMethods = getMethods;
+        this.POSTMethods = POSTMethods;
+        this.GETMethods = GETMethods;
     }
 }

@@ -37,8 +37,8 @@ public class BeanFactory {
 
             // 添加路由信息
             boolean isRoute = clazz.isAnnotationPresent(Sonnet.class);
-            List<Method> postMethods = new ArrayList<>();
-            List<Method> getMethods = new ArrayList<>();
+            List<Method> POSTMethods = new ArrayList<>();
+            List<Method> GETMethods = new ArrayList<>();
             if (isRoute) {
                 for (Method method : clazz.getDeclaredMethods()) {
                     if (method.isAnnotationPresent(POSTRequest.class)) {
@@ -55,7 +55,7 @@ public class BeanFactory {
                             throw new IllegalStateException("Route " + clazz.getName() + "::" + method.getName() + " must return JsonElement");
                         }
 
-                        postMethods.add(method);
+                        POSTMethods.add(method);
                     } else if (method.isAnnotationPresent(GETRequest.class)) {
                         // 检查参数合法性
                         int count = method.getParameterCount();
@@ -70,12 +70,12 @@ public class BeanFactory {
                             throw new IllegalStateException("Route " + clazz.getName() + "::" + method.getName() + " must return JsonElement");
                         }
 
-                        getMethods.add(method);
+                        GETMethods.add(method);
                     }
                 }
             }
 
-            BeanDefinition beanDefinition = new BeanDefinition(clazz, fields, isRoute, postMethods, getMethods);
+            BeanDefinition beanDefinition = new BeanDefinition(clazz, fields, isRoute, POSTMethods, GETMethods);
             beanDefinitions.put(clazz, beanDefinition);
         }
 
